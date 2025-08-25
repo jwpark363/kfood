@@ -1,0 +1,13 @@
+<svg width="300" height="150" viewBox="0 0 300 150" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bowl -->
+  <circle cx="60" cy="60" r="40" fill="black" />
+  <path d="M40 60 Q60 80 80 60" stroke="white" stroke-width="4" fill="none" />
+  
+  <!-- Chopsticks -->
+  <line x1="65" y1="35" x2="110" y2="10" stroke="black" stroke-width="6" />
+  <line x1="75" y1="40" x2="120" y2="15" stroke="black" stroke-width="6" />
+
+  <!-- Text -->
+  <text x="130" y="65" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="black">K-</text>
+  <text x="130" y="115" font-family="Arial, sans-serif" font-size="40" font-weight="bold" fill="black">FOOD</text>
+</svg>
