@@ -7,3 +7,8 @@ export function makeRandoms(max:number,times=1){
     }
     return numbers;
 }
+
+export function splitImage(path:string|null){
+    if(path === null) return '';
+    return path.split('/').at(-1);
+}

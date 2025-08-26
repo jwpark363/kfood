@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import Home from "./router/home";
 import Header from "./componets/header";
 import styled from "styled-components";
-import Bottom from "./componets/bottom";
 import CodeList from "./router/code_list";
 import Recommend from "./router/recommend";
+import { BackImage } from "./componets/styled_components";
 
 const Box = styled.div`
   margin: 0px auto;
@@ -16,22 +16,21 @@ const Box = styled.div`
   align-items: center;
   gap: 12px;
   border-radius: 12px;
-  background-color: ${props => props.theme.colors.background};
 `;
 function App() {
   return (
     <>
     <Box>
-      <div className="Back" />
+    <BackImage $path="/kfood/images/main-back.png"/>
       <BrowserRouter>
         <Header />
         {/* <Menus /> */}
         <Routes>
           <Route path="/kfood" element={<Home />} />
           <Route path="/kfood/recommend" element={<Recommend />} />
+          <Route path="/kfood/recommend/:code" element={<Recommend />} />
           <Route path="/code" element={<CodeList />} />
         </Routes>
-        <Bottom />
       </BrowserRouter>
     </Box>
     </>

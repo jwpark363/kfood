@@ -14,4 +14,8 @@ export const BackImage = styled.div<{$path:string}>`
         opacity: 0.3; 
         z-index: -1; 
     }
-`
+`;
+export const Svg = styled.svg<{$size:number}>`
+    width: ${props => `${props.$size}px`};
+    height: ${props => `${props.$size}px`};
+`;
