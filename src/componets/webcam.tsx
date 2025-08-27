@@ -1,8 +1,10 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Webcam from "react-webcam";
 import styled from "styled-components";
 import { Svg } from "./styled_components";
 import { FileUploader } from "react-drag-drop-files";
+import axios from "axios";
+import { base64ToBlob } from "../lib/image_util";
 
 const Box = styled.div`
     display: flex;
@@ -18,7 +20,7 @@ const ToggleBox = styled.div`
 `;
 const ToggleSvg = styled(Svg)<{$isSelected:boolean}>`
     fill: ${props => props.$isSelected?'#c2255c':'gray'};
-
+    cursor: pointer;
 `;
 const videoConstraints = {
   width: 400,
@@ -35,26 +37,56 @@ const ImageUploader = styled.div`
     gap: 12px;
 `;
 export default function WebcamCapture(){
-    const [isWebCam, setWebCam] = useState(true);
+    const [isWebCam, setWebCam] = useState(false);
     const webcamRef = useRef<Webcam>(null);
+    // const formRef = useRef<HTMLFormElement>(null);
     const [file, setFile] = useState<File | File[] | null>(null);
     const handleChange = (selected_file:File|File[]) => {
         setFile(selected_file);
         console.log(selected_file);
     };
-    const capture = useCallback(
-        () => {
-            if(isWebCam){
-                // 카메라 캡쳐 이미지
-                const imageSrc = webcamRef.current?.getScreenshot();
-                console.log(imageSrc);
-            }else{
-                console.log(file);
-
+    const capture = () => {
+        if(isWebCam){
+            // 카메라 캡쳐 이미지 jpeg 파일 변경
+            const imageSrc = webcamRef.current?.getScreenshot();
+            if(!imageSrc){
+                alert('이미지 캡쳐가 되지 않았습니다. 다시한번 시도해주세요!')
+                return;
             }
-        },
-        [webcamRef,isWebCam,file]
-    );
+            const _img_blob = base64ToBlob(imageSrc,'image/jpeg');
+            const _filename = `webcam_capture_${Date.now()}.jpeg`;
+            const _file = new File([_img_blob], _filename, {
+                    type: 'image/jpeg',
+            });
+            // console.log(_file)
+            handleForm(_file)
+        }else{
+            // console.log(file);
+            handleForm(file)
+            //파일 초기화
+            setFile(null);
+        }
+    };
+    const handleForm = async (target_file:File | File[] | null) => {
+        if(!target_file){
+            alert('업로드할 파일을 선택하세요!')
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file',Array.isArray(target_file) ? target_file[0] : target_file);
+        try {
+            const response = await axios.post('http://localhost:8000/uploadfile/', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            console.log('Upload successful!', response.data);
+            alert('Image uploaded successfully!');
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            alert('Failed to upload image.');
+        }
+    }
   return (
     <Box>
         <ToggleBox>
@@ -91,7 +123,11 @@ export default function WebcamCapture(){
             }
         </ImageUploader>
         }
-        <Svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" onClick={capture} fill="#c2255c" $size={48}>
+        <Svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"
+            style={{
+                cursor:'pointer'
+            }}
+            onClick={capture} fill="#c2255c" $size={48}>
             <path d="M352 0c0-17.7-14.3-32-32-32S288-17.7 288 0l0 64-96 0c-53 0-96 43-96 96l0 224c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-224c0-53-43-96-96-96l-96 0 0-64zM160 368c0-13.3 10.7-24 24-24l32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0c-13.3 0-24-10.7-24-24zm120 0c0-13.3 10.7-24 24-24l32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0c-13.3 0-24-10.7-24-24zm120 0c0-13.3 10.7-24 24-24l32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0c-13.3 0-24-10.7-24-24zM224 176a48 48 0 1 1 0 96 48 48 0 1 1 0-96zm144 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zM64 224c0-17.7-14.3-32-32-32S0 206.3 0 224l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96zm544-32c-17.7 0-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32z"/>
         </Svg>
     </Box>

@@ -106,10 +106,10 @@ return(
     <ImageBannerBox>
         {
             rFoods.map((data,i) => 
-                <div style={{
+                <div key={i} style={{
                     display:'flex', flexDirection:'column'
                 }}>
-                    <NavLink to={`/kfood/recommend/${data.code}`} key={i}>
+                    <NavLink to={`/kfood/detail/${data.code}`} key={i}>
                         <BannerImage $path={`https://www.hansik.or.kr/resources/img/recipe/${foodImage(data)}`} />
                     </NavLink>
                     <span style={{

@@ -1,69 +1,18 @@
-# React + TypeScript + Vite
+# EfficientNet 기반 K-Food 이미지 분류, 유사 음식 추천 시스템
+### 이 시스템은 EfficientNet 모델을 활용하여 사용자가 제공한 음식 이미지를 분류하고, 그에 맞는 레시피와 재료 정보를 제공하며, 필요에 따라 재료 기반 유사한 분석을 통한 음식을 추천하는 시스템입니다.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+1. 이미지 분류 (EfficientNet)
+- 시스템의 핵심 기능은 사용자가 업로드한 이미지를 정확하게 식별하는 것입니다.
+- 모델: 효율성과 정확도가 뛰어난 EfficientNet을 사용합니다.
+- 학습: 150개의 한국 음식에 대한 150,000개 이미지 데이터셋을 구축하고, 사전 학습된 EfficientNet 모델을 전이 학습하여 K-Food 분류에 최적화합니다.
+- 결과: 모델은 이미지 분석을 통해 가장 가능성 높은 음식의 이름을 반환합니다.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+2. 레시피 및 재료 정보 제공
+- 분류된 음식 이름에 따라 한식진흥원 데이터를 기반으로 레시피와 재료 정보를 사용자에게 제공합니다.
+- 기본 데이터 : 한식진흥원의 이미지&레시피&재료 정보를 Json 데이터로 구축
+- 추천 데이터 : 농촌진흥청의 한식요리정보의 재료 정보를 음식별 구성 재료 용량을 테이블 형식으로 정리한 벡터를 이용한 코사인 유사도 결과 파일 Json 데이터로 구축
+- 정보 검색: 이미지 분류 모델의 결과물인 음식의 코드를 **키(Key)**로 사용하여 구축한 데이터의 해당 음식 재료, 레시피 정보를 검색
+3. 재료 기반 유사 음식 추천
+- 사용자가 요청할 경우, 코사인 유사도 기반 추천 데이터를 기반으로 유사 음식 검색 제공
+- 유사도 분석: 분류된 음식의 재료별 용량을 이용하여 코사인 유사도를 계산합니다.
+- 추천 목록: 계산된 유사도 점수가 높은 순서대로 음식 목록을 정렬하여 제공합니다.

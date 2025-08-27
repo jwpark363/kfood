@@ -5,6 +5,7 @@ import styled from "styled-components";
 import CodeList from "./router/code_list";
 import Recommend from "./router/recommend";
 import { BackImage } from "./componets/styled_components";
+import FoodDetail from "./router/food_detail";
 
 const Box = styled.div`
   margin: 0px auto;
@@ -27,7 +28,7 @@ function App() {
         {/* <Menus /> */}
         <Routes>
           <Route path="/kfood" element={<Home />} />
-          <Route path="/kfood/recommend" element={<Recommend />} />
+          <Route path="/kfood/detail/:code" element={<FoodDetail />} />
           <Route path="/kfood/recommend/:code" element={<Recommend />} />
           <Route path="/code" element={<CodeList />} />
         </Routes>
