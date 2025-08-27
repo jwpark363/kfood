@@ -67,7 +67,9 @@ export default function Recommend(){
             const formData = new FormData();
             formData.append('file',Array.isArray(image) ? image[0] : image);
             try {
-                const response = await axios.post('http://127.0.0.1:8000/api/predict/', formData, {
+                // const BASE_URL = 'http://127.0.0.1:8000/' //로컬 테스트
+                const BASE_URL = 'https://c86e0dd53921.ngrok-free.app/'
+                const response = await axios.post(`${BASE_URL}/api/predict/`, formData, {
                     headers: {
                         'accept': 'application/json',
                         'Content-Type': 'multipart/form-data',

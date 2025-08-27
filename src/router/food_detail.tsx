@@ -47,7 +47,7 @@ export default function FoodDetail(){
             <ImageBox>
                 <FoodImage $path={`https://www.hansik.or.kr/resources/img/recipe/${foodImage()}`}></FoodImage>
             </ImageBox>
-            <FoodDesc food={food} predict={null}/>
+            <FoodDesc food={food} predict={null} recommend={null}/>
             <FoodRecipe food={food}/>
         </Box>
     )
