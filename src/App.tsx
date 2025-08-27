@@ -29,7 +29,7 @@ function App() {
         <Routes>
           <Route path="/kfood" element={<Home />} />
           <Route path="/kfood/detail/:code" element={<FoodDetail />} />
-          <Route path="/kfood/recommend/:code" element={<Recommend />} />
+          <Route path="/kfood/recommend" element={<Recommend />} />
           <Route path="/code" element={<CodeList />} />
         </Routes>
       </BrowserRouter>

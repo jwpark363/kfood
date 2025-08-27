@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import styled from "styled-components"
-import { fetch_food_data_by_code, type Food } from "../api";
-import { splitImage, makeRandoms } from "../lib/util";
-import { useParams } from "react-router";
+import { fetch_code_map, fetch_food_data_by_code, type CodeData, type Food, type Predict } from "../api";
+import { splitImage } from "../lib/util";
+import { useLocation } from "react-router";
+import axios from "axios";
+import FoodDesc from "../componets/fooddesc";
+import FoodRecipe from "../componets/foodrecipe";
+import { Svg } from "../componets/styled_components";
 
 const Box = styled.div`
     display: flex;
@@ -17,7 +21,7 @@ const ImageBox = styled.div`
     margin: 24px 16px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    justify-items: center;
+    justify-items: start;
     gap: 8px;
     font-size: 18px;
 `;
@@ -29,196 +33,84 @@ const FoodImage = styled.div<{$path:string}>`
     height: 240px;
     border-radius: 12px;
 `;
-const FoodDesc = styled.div`
-    margin-top: 20px;
-    width: 80%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    border: 1px dotted gray;
-    .head{
-        width: 100%;
-        padding: 12px;
-        background-color: lightgrey;
-        display: flex;
-        justify-content: space-around;
-    }
-    .ingredient{
-        width: 96%;
-        font-size: 14px;
-        min-height: 60px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
-    .item{
-        display: grid;
-        grid-template-columns: 1fr 5fr;
-        padding: 8px;
-        border-bottom: 1px dashed lightgrey;
-        line-height: 1.4;
-        &:last-child{
-            border: none;
-        }
-    }
+const FileImage = styled.img`
+    width: 100%;
+    height: 240px;
+    border-radius: 12px;
 `;
-const RecipeBox = styled.div`
-    margin-top: 20px;
-    width: 80%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    border: 1px dotted gray;
-    .head{
-        width: 100%;
-        padding: 12px;
-        background-color: lightgrey;
-        display: flex;
-        justify-content: center;
-    }
-    .step{
-        width: 100%;
-        padding: 8px;
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        align-items: center;
-        .arr{
-            cursor: pointer;
-            display: flex;
-        }
-        .right_arr{
-            justify-content: end;
-        }
-        .title{
-            font-size: 18px;
-            font-weight: bold;
-        }
-    }
-    .contents{
-        width: 96%;
-        font-size: 14px;
-        ul{
-            margin: 12px;
-            counter-reset: list-item;
-            list-style-type: none;
-            padding-left: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        li{
-            counter-increment: list-item;
-            position: relative;
-            padding-left: 1em;
-            line-height: 1.2;
-        }
-        li::before{
-            content: counter(list-item) ".";
-            position: absolute;
-            left: 0;
-            // 숫자 스타일
-        }
-    }
-`;
-const Svg = styled.svg`
-    width: 40px;
-    height: 40px;
-    padding: 8px;
-    border: 1px solid grey;
-    border-radius: 50%;
-`;
+interface RecommendParam{
+    image:File
+}
 export default function Recommend(){
-    const { code } = useParams();
-    const [recipeStep, setStep] = useState(0);
+    const location = useLocation();
+    const image : RecommendParam = location.state?.image
+    const [code_map,setCodeMap] = useState<CodeData[]>([]);
+    const [predict,setPredict] = useState<Predict|null>(null);
     const [food,setFood] = useState<Food|null>(null);
-    useEffect(() => {
-        (async() => {
-            const food_code = code ? code : makeRandoms(100,1)[0]
-            const _food = await fetch_food_data_by_code(food_code.toString())
-            setFood(_food);
-        })()
-    },[code])
-    const handleStep = (step:number) => {
-        if(food === null) return;
-        const _step = step > 0 ? 1 : step < 0 ? -1 : 0;
-        // _step 1
-        if(_step == 1){
-            if(recipeStep >= food.recipe.length - 1)
-                setStep(0)
-            else
-                setStep(prev => prev + 1)
-        }
-        //_step -1
-        if(_step == -1){
-            if(recipeStep === 0)
-                setStep(food.recipe.length - 1)
-            else
-                setStep(prev => prev - 1)
-        }
-    }
+    const [recommend,setRecommend] = useState<CodeData[]|null>(null);
     const foodImage = () => {
         if(food === null) return '';
         return splitImage(food.image)
     }
-    const recipeDesc = () => {
-        if(food === null) return null;
-        // console.log(food instanceof Food);
-        if(Array.isArray(food.recipe[recipeStep].desc))
-            return food.recipe[recipeStep].desc
-        else
-            return [food.recipe[recipeStep].desc]
-    }
+    //code map 가져오기
+    useEffect(() => {
+        (async() => {
+            const _code_text = await fetch_code_map()
+            const _code_map = JSON.parse(_code_text.replaceAll('NaN','""'))
+            setCodeMap(_code_map)
+        })()
+    },[])
+    //이미지 파일을 받아 해당 내용 예측 진행
+    useEffect(() => {
+        if(!image) return;
+        (async()=> {
+            const formData = new FormData();
+            formData.append('file',Array.isArray(image) ? image[0] : image);
+            try {
+                const response = await axios.post('http://127.0.0.1:8000/api/predict/', formData, {
+                    headers: {
+                        'accept': 'application/json',
+                        'Content-Type': 'multipart/form-data',
+                    },
+                });
+                console.log('Upload successful!', response.data);
+                const _predict = response.data;
+                // 예측 데이터
+                setPredict(_predict)
+                // 예측 데이터에 대한 코드맵에서 맵핑 데이터 가져오기
+                const find_code = code_map.filter(data => data.code === _predict.class_code)
+                const _food_code = (find_code && find_code.length > 0) ? find_code[0] : null;
+                if(!_food_code) return;
+                // 맵핑 데이터 정보 가져오기
+                const _food = await fetch_food_data_by_code(_food_code.kfood_code);
+                const _recommend = code_map.filter(data =>
+                    _predict.class_code !== data.code && 
+                    _food_code.similarity.includes(data.code)
+                )
+                // console.log(_recommend);
+                // console.log(code_map);
+                // console.log(_food_code);
+                // console.log(_predict);
+                setFood(_food)
+                setRecommend(_recommend);
+            } catch (error) {
+                console.error('Error uploading image:', error);
+            }
+        })()
+    },[image,code_map])
     return(
         <Box>
             <ImageBox>
-                <FoodImage $path='https://www.semie.cooking/image/board/cooking/wl/ix/dnpzlhmr/155174454dbej.jpg'></FoodImage>
+                <Svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" $size={28} fill="grey">
+                    <path d="M224 248a120 120 0 1 0 0-240 120 120 0 1 0 0 240zm-29.7 56C95.8 304 16 383.8 16 482.3 16 498.7 29.3 512 45.7 512l356.6 0c16.4 0 29.7-13.3 29.7-29.7 0-98.5-79.8-178.3-178.3-178.3l-59.4 0z"/>                </Svg>
+                <Svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" $size={34} fill="grey">
+                    <path d="M352 0c0-17.7-14.3-32-32-32S288-17.7 288 0l0 64-96 0c-53 0-96 43-96 96l0 224c0 53 43 96 96 96l256 0c53 0 96-43 96-96l0-224c0-53-43-96-96-96l-96 0 0-64zM160 368c0-13.3 10.7-24 24-24l32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0c-13.3 0-24-10.7-24-24zm120 0c0-13.3 10.7-24 24-24l32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0c-13.3 0-24-10.7-24-24zm120 0c0-13.3 10.7-24 24-24l32 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-32 0c-13.3 0-24-10.7-24-24zM224 176a48 48 0 1 1 0 96 48 48 0 1 1 0-96zm144 48a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zM64 224c0-17.7-14.3-32-32-32S0 206.3 0 224l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96zm544-32c-17.7 0-32 14.3-32 32l0 96c0 17.7 14.3 32 32 32s32-14.3 32-32l0-96c0-17.7-14.3-32-32-32z"/>
+                </Svg>
+                <FileImage src={URL.createObjectURL(image as any)}></FileImage>
                 <FoodImage $path={`https://www.hansik.or.kr/resources/img/recipe/${foodImage()}`}></FoodImage>
-                <span>입력된 이미지</span>
-                <span>K-Food Finder 이미지</span>
             </ImageBox>
-            <FoodDesc>
-                <div className="head">
-                    <span>{food && food.menu}</span>
-                    <span>92.34%</span>
-                </div>
-                <div className="ingredient">
-                    {food && food.ingredient.map((data,i) =>
-                        <div className="item" key={i}>
-                            <span>{data.title} 재료</span>
-                            <span>{data.ingredients.join(',')}</span>
-                        </div>
-                    )}
-                </div>
-            </FoodDesc>
-            <RecipeBox>
-                <div className="head">
-                    <span>한단계씩 따라해보세요.</span>
-                </div>
-                <div className="step">
-                    <div className="arr left_arr">
-                        <Svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512" onClick={() => handleStep(-1)}>
-                            <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L77.3 256 214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/>
-                        </Svg>
-                    </div>
-                    <div className="title">
-                        <span>Step {recipeStep + 1}. {food && food.recipe[recipeStep].title}</span>
-                    </div>
-                    <div className="arr right_arr">
-                        <Svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 512" onClick={() => handleStep(1)}>
-                            <path d="M247.1 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L179.2 256 41.9 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/>
-                        </Svg>
-                    </div>
-                </div>
-                <div className='contents'>
-                    <ul>
-                    {food && recipeDesc()?.map((data,i) => 
-                        <li key={i}>{data}</li>
-                    )}
-                    </ul>
-                </div>
-            </RecipeBox>
+            <FoodDesc food={food} predict={predict} recommend={recommend}/>
+            <FoodRecipe food={food}/>
         </Box>
     )
 }
