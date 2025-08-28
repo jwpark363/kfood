@@ -25,7 +25,7 @@ const ToggleSvg = styled(Svg)<{$isSelected:boolean}>`
 const videoConstraints = {
   width: 400,
   height: 300,
-  facingMode: "user"
+  facingMode: "environment"
 };
 const ImageUploader = styled.div`
     width: 400px;
@@ -43,7 +43,6 @@ export default function WebcamCapture(){
     const [file, setFile] = useState<File | File[] | null>(null);
     const handleChange = (selected_file:File|File[]) => {
         setFile(selected_file);
-        console.log(selected_file);
     };
     const capture = () => {
         if(isWebCam){
